@@ -1,0 +1,2 @@
+# MoneySChestShop
+MoneySAPIと連携するチェストショッププラグイン
