@@ -12,6 +12,7 @@ import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
+import cn.nukkit.utils.TextFormat;
 
 import java.util.LinkedHashMap;
 
@@ -160,11 +161,13 @@ public class EventListener implements Listener {
                 String[] productData = event.getLine(3).split(":");
                 int saleNum = 0;
                 int price = 0;
+                int priceIncludeCommission = 0;
                 int pID = 0;
                 int pMeta = 0;
                 try {
                     saleNum = Integer.parseInt(event.getLine(1));
                     price = Integer.parseInt(event.getLine(2));
+                    priceIncludeCommission = (int) (price * 0.5);
                     pID = Integer.parseInt(productData[0]);
                     pMeta = Integer.parseInt(productData[1]);
                 } catch (NullPointerException e) {
@@ -186,16 +189,16 @@ public class EventListener implements Listener {
                 if (chest == null) return;
 
                 String productName = Block.get(pID, pMeta).getName();
-                event.setLine(0, shopOwner);
+                event.setLine(0, TextFormat.WHITE + shopOwner);
                 event.setLine(1, "数量/amount:" + saleNum);
-                event.setLine(2, "値段/price:" + price);
+                event.setLine(2, "値段/price:" + priceIncludeCommission);
                 event.setLine(3, productName);
 	
 				int[] signCondition = {(int) event.getBlock().x, (int) event.getBlock().y, (int) event.getBlock().z};
                 if(sqLite3DataProvider.existsShop(signCondition)) {
-                    sqLite3DataProvider.updateShop(shopOwner, saleNum, price, pID, pMeta, sign, chest);
+                    sqLite3DataProvider.updateShop(shopOwner, saleNum, priceIncludeCommission, pID, pMeta, sign, chest);
 				} else {
-					sqLite3DataProvider.registerShop(shopOwner, saleNum, price, pID, pMeta, sign, chest);
+					sqLite3DataProvider.registerShop(shopOwner, saleNum, priceIncludeCommission, pID, pMeta, sign, chest);
 				}
                 player.sendMessage("システム>> チェストショップを作成しました");
             }

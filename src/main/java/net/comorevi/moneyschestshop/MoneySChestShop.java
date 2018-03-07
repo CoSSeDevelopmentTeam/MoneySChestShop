@@ -1,3 +1,28 @@
+/**
+ * MoneySChestShop
+ * PocketMine-MPのプラグインであるChestShopのNukkit移植＆MoneySAPI対応版
+ *
+ * CosmoSunriseServerPluginEditorsTeam
+ *
+ * HP: http://info.comorevi.net
+ * GitHub: https://github.com/CosmoSunriseServerPluginEditorsTeam
+ *
+ *
+ * [Java版]
+ * @author popkechupki
+ *
+ * [PHP版]
+ * @author MinecrafterJPN
+ *
+ * 機能版 アップデート履歴
+ *
+ * - 1.0.0
+ *    基本的な機能を追加。ほぼ動作するように。
+ *  - 1.1.0
+ *    手数料の概念を追加
+ *
+ */
+
 package net.comorevi.moneyschestshop;
 
 import cn.nukkit.Player;
