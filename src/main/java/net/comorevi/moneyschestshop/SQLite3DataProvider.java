@@ -93,14 +93,17 @@ public class SQLite3DataProvider {
         }
     }
     
-    public void updateShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign, Block chest) {
+    public void updateShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-        
-            statement.executeUpdate("replace into ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) values ('"+shopOwner+"', "+saleNum+", "+price+", "+productID+", "+productMeta+", "+sign.x+", "+sign.y+", "+sign.z+", "+chest.x+", "+chest.y+", "+chest.z+")");
+            
+            int[] signCondition = {(int) sign.x, (int) sign.y, (int) sign.z};
+            LinkedHashMap<String, Object> shopSignInfo = getShopInfo(signCondition);
+            
+            statement.executeUpdate("update ChestShop set shopOwner = '" + shopOwner + "', saleNum = " + saleNum + ", price = " + price + ", productID = " + productID + ", productMeta = " + productMeta + " where id = " + shopSignInfo.get("id"));
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at updateShop");
         } finally {
@@ -124,6 +127,7 @@ public class SQLite3DataProvider {
 
             ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2]);
             LinkedHashMap<String, Object> shopInfo = new LinkedHashMap<String, Object>(){{
+                put("id", rs.getInt("id"));
                 put("shopOwner", rs.getString("shopOwner"));
                 put("saleNum", rs.getInt("saleNum"));
                 put("price", rs.getInt("price"));

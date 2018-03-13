@@ -55,15 +55,18 @@ public class EventListener implements Listener {
                 if(sqLite3DataProvider.existsShop(signCondition)) {
                     LinkedHashMap<String, Object> shopSignInfo = sqLite3DataProvider.getShopInfo(signCondition);
                     
+                    
                     if(shopSignInfo.get("shopOwner").equals(username)) {
                         player.sendMessage("システム>> 自分のショップからは購入できません");
                         return;
                     }
                     
+                    int price = (int) shopSignInfo.get("price");
+                    int priceIncludeCommission = (int) (price * 1.05);
                     int buyermoney = mainClass.getMoneySAPI().getMoney(player);
-                    if((int) shopSignInfo.get("price") < buyermoney) {
+                    if(buyermoney < priceIncludeCommission) {
                         player.sendMessage("システム>> 所持金が不足しているため購入できません");
-                        return;
+                        break;
                     }
     
                     BlockEntityChest chest = (BlockEntityChest) player.getLevel().getBlockEntity(new Vector3((int) shopSignInfo.get("chestX"), (int) shopSignInfo.get("chestY"), (int) shopSignInfo.get("chestZ")));
@@ -80,6 +83,7 @@ public class EventListener implements Listener {
                         if(shopOwner != null) {
                             shopOwner.sendMessage("システム>> あなたのチェストショップが在庫切れになっています！ 補給すべきもの " + pID + ":" + pMeta);
                         }
+                        return;
                     }
                     
                     Item shopItem = Item.get(pID, pMeta, (int) shopSignInfo.get("saleNum"));
@@ -98,6 +102,8 @@ public class EventListener implements Listener {
                             }
                         }
                     }
+                    mainClass.getMoneySAPI().reduceMoney(username, (int) (price * 0.05));
+                    System.out.println((int) (price * 0.05));
                     mainClass.getMoneySAPI().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
                     
                     player.sendMessage("システム>> 購入処理が完了しました");
@@ -167,16 +173,21 @@ public class EventListener implements Listener {
                 try {
                     saleNum = Integer.parseInt(event.getLine(1));
                     price = Integer.parseInt(event.getLine(2));
-                    priceIncludeCommission = (int) (price * 0.05);
-                    pID = Integer.parseInt(productData[0]);
-                    pMeta = Integer.parseInt(productData[1]);
-                } catch (NullPointerException e) {
-                    pMeta = 0;
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    pMeta = 0;
+                    priceIncludeCommission = (int) (price * 1.05);
                 } catch (NumberFormatException e) {
                     event.setCancelled();
                     player.sendMessage("システム>> 不適切なデータが入力されました");
+                    return;
+                }
+                try {
+                    if(productData.length == 1) {
+                        pID = Integer.parseInt(event.getLine(3));
+                    } else {
+                        pID = Integer.parseInt(productData[0]);
+                        pMeta = Integer.parseInt(productData[1]);
+                    }
+                } catch (NumberFormatException e) {
+                    event.setCancelled();
                 }
 
                 Block sign = event.getBlock();
@@ -195,12 +206,15 @@ public class EventListener implements Listener {
                 event.setLine(3, productName);
 	
 				int[] signCondition = {(int) event.getBlock().x, (int) event.getBlock().y, (int) event.getBlock().z};
+				
                 if(sqLite3DataProvider.existsShop(signCondition)) {
-                    sqLite3DataProvider.updateShop(shopOwner, saleNum, priceIncludeCommission, pID, pMeta, sign, chest);
+                    sqLite3DataProvider.updateShop(shopOwner, saleNum, price, pID, pMeta, sign);
+                    //player.sendMessage("システム>> チェストショップを更新しました");
 				} else {
-					sqLite3DataProvider.registerShop(shopOwner, saleNum, priceIncludeCommission, pID, pMeta, sign, chest);
+					sqLite3DataProvider.registerShop(shopOwner, saleNum, price, pID, pMeta, sign, chest);
+                    player.sendMessage("システム>> チェストショップを作成しました");
 				}
-                player.sendMessage("システム>> チェストショップを作成しました");
+				
             }
         } catch(ArrayIndexOutOfBoundsException e) {
             event.setCancelled();
