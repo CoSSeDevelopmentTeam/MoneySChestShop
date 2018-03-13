@@ -46,6 +46,11 @@ public class EventListener implements Listener {
                     "Name: " + blockName + "\n" +
                     "ID: " + blockId + "\n" +
                     "Meta: " + blockMeta);
+            player.sendMessage("システム>> HoldItemData" + "\n" +
+                    "Name: " + player.getInventory().getItemInHand().getName() + "\n" +
+                    "ID: " + player.getInventory().getItemInHand().getId() + "\n" +
+                    "Damage: " + player.getInventory().getItemInHand().getDamage() + "/" + player.getInventory().getItemInHand().getMaxDurability() + "\n");
+            event.setCancelled();
         }
         
         switch(blockId) {
