@@ -51,7 +51,7 @@ public class EventListener implements Listener {
         switch(blockId) {
             case Block.SIGN_POST:
             case Block.WALL_SIGN:
-                int[] signCondition = {(int) block.x, (int) block.y, (int) block.z};
+                Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
                 if(sqLite3DataProvider.existsShop(signCondition)) {
                     LinkedHashMap<String, Object> shopSignInfo = sqLite3DataProvider.getShopInfo(signCondition);
                     
@@ -114,7 +114,7 @@ public class EventListener implements Listener {
                 break;
             
             case Block.CHEST:
-                int[] chestCondition = {(int) block.x, (int) block.y, (int) block.z};
+                Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
                 if(sqLite3DataProvider.existsShop(chestCondition)) {
                     if(!sqLite3DataProvider.isShopOwner(chestCondition, player)) {
                         player.sendMessage("システム>> このチェストは保護されています");
@@ -132,7 +132,7 @@ public class EventListener implements Listener {
         switch(block.getId()) {
             case Block.SIGN_POST:
             case Block.WALL_SIGN:
-                int[] signCondition = {(int) block.x, (int) block.y, (int) block.z};
+                Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
                 if(sqLite3DataProvider.existsShop(signCondition)) {
                     if(sqLite3DataProvider.isShopOwner(signCondition, player)) {
                         sqLite3DataProvider.removeShopBySign(signCondition);
@@ -144,7 +144,7 @@ public class EventListener implements Listener {
                 }
                 break;
             case Block.CHEST:
-                int[] chestCondition = {(int) block.x, (int) block.y, (int) block.z};
+                Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
                 if(sqLite3DataProvider.existsShop(chestCondition)) {
                     if(sqLite3DataProvider.isShopOwner(chestCondition, player)) {
                         sqLite3DataProvider.removeShopByChest(chestCondition);
@@ -205,7 +205,7 @@ public class EventListener implements Listener {
                 event.setLine(2, "値段/price:" + priceIncludeCommission);
                 event.setLine(3, productName);
 	
-				int[] signCondition = {(int) event.getBlock().x, (int) event.getBlock().y, (int) event.getBlock().z};
+				Object[] signCondition = {(int) event.getBlock().x, (int) event.getBlock().y, (int) event.getBlock().z, event.getBlock().getLevel().getName()};
 				
                 if(sqLite3DataProvider.existsShop(signCondition)) {
                     sqLite3DataProvider.updateShop(shopOwner, saleNum, price, pID, pMeta, sign);

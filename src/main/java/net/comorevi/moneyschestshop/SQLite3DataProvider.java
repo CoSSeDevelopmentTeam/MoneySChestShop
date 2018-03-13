@@ -17,14 +17,14 @@ public class SQLite3DataProvider {
         connect();
     }
 
-    public void removeShopBySign(int[] condition) {
+    public void removeShopBySign(Object[] condition) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
             
-            statement.executeUpdate("delete from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2]);
+            statement.executeUpdate("delete from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at removeShopSign");
         } finally {
@@ -39,14 +39,14 @@ public class SQLite3DataProvider {
         }
     }
     
-    public void removeShopByChest(int[] condition) {
+    public void removeShopByChest(Object[] condition) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
             
-            statement.executeUpdate("delete from ChestShop where chestX = " + condition[0] + " and chestY = " + condition[1] + " and chestZ = " + condition[2]);
+            statement.executeUpdate("delete from ChestShop where chestX = " + condition[0] + " and chestY = " + condition[1] + " and chestZ = " + condition[2] + " and level = '" + condition[3] + "'");
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at removeShopChest");
         } finally {
@@ -78,7 +78,7 @@ public class SQLite3DataProvider {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            statement.executeUpdate("insert into ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) values ('"+shopOwner+"', "+saleNum+", "+price+", "+productID+", "+productMeta+", "+sign.x+", "+sign.y+", "+sign.z+", "+chest.x+", "+chest.y+", "+chest.z+")");
+            statement.executeUpdate("insert into ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ , level) values ('"+shopOwner+"', "+saleNum+", "+price+", "+productID+", "+productMeta+", "+sign.x+", "+sign.y+", "+sign.z+", "+chest.x+", "+chest.y+", "+chest.z+", '"+sign.getLevel().getName()+"')");
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at registerShop");
         } finally {
@@ -100,7 +100,7 @@ public class SQLite3DataProvider {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
             
-            int[] signCondition = {(int) sign.x, (int) sign.y, (int) sign.z};
+            Object[] signCondition = {(int) sign.x, (int) sign.y, (int) sign.z};
             LinkedHashMap<String, Object> shopSignInfo = getShopInfo(signCondition);
             
             statement.executeUpdate("update ChestShop set shopOwner = '" + shopOwner + "', saleNum = " + saleNum + ", price = " + price + ", productID = " + productID + ", productMeta = " + productMeta + " where id = " + shopSignInfo.get("id"));
@@ -118,14 +118,14 @@ public class SQLite3DataProvider {
         }
     }
     
-    public LinkedHashMap<String, Object> getShopInfo(int[] condition) {
+    public LinkedHashMap<String, Object> getShopInfo(Object[] condition) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2]);
+            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
             LinkedHashMap<String, Object> shopInfo = new LinkedHashMap<String, Object>(){{
                 put("id", rs.getInt("id"));
                 put("shopOwner", rs.getString("shopOwner"));
@@ -157,14 +157,14 @@ public class SQLite3DataProvider {
         return null;
     }
     
-    public boolean isShopOwner(int[] condition, Player player) {
+    public boolean isShopOwner(Object[] condition, Player player) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
     
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2]);
+            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
             if(rs.getString("shopOwner").equals(player.getName())) return true;
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at isShopOwner");
@@ -181,14 +181,14 @@ public class SQLite3DataProvider {
         return false;
     }
     
-    public boolean existsShop(int[] condition) {
+    public boolean existsShop(Object[] condition) {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2]);
+            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
             return rs.next();
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at existsShop");
@@ -230,7 +230,8 @@ public class SQLite3DataProvider {
                     "signZ integer not null, " +
                     "chestX integer not null, " +
                     "chestY integer not null, " +
-                    "chestZ integer not null" +
+                    "chestZ integer not null," +
+                    "level text not null" +
                     ")"
             );
         } catch(SQLException e) {
