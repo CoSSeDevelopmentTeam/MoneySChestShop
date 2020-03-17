@@ -68,7 +68,7 @@ public class EventListener implements Listener {
                     
                     int price = (int) shopSignInfo.get("price");
                     int priceIncludeCommission = (int) (price * 1.05);
-                    int buyermoney = mainClass.getMoneySAPI().getMoney(player);
+                    int buyermoney = mainClass.getMoneySAPI().getMoney(player.getName());
                     if(buyermoney < priceIncludeCommission) {
                         player.sendMessage("システム>> 所持金が不足しているため購入できません");
                         break;
