@@ -108,7 +108,6 @@ public class EventListener implements Listener {
                         }
                     }
                     mainClass.getMoneySAPI().reduceMoney(username, (int) (price * 0.05));
-                    System.out.println((int) (price * 0.05));
                     mainClass.getMoneySAPI().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
                     
                     player.sendMessage("システム>> 購入処理が完了しました");
