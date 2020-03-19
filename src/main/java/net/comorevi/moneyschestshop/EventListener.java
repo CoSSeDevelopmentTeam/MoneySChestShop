@@ -49,11 +49,11 @@ public class EventListener implements Listener {
         int blockId = block.getId();
         int blockMeta = block.getDamage();
         if(DataCenter.existsIdCmdQueue(player)) {
-            player.sendMessage("システム>> BlockData" + "\n" +
+            player.sendMessage(Main.MESSAGE_PREFIX+"BlockData" + "\n" +
                     "Name: " + blockName + "\n" +
                     "ID: " + blockId + "\n" +
                     "Meta: " + blockMeta);
-            player.sendMessage("システム>> HoldItemData" + "\n" +
+            player.sendMessage(Main.MESSAGE_PREFIX+"HoldItemData" + "\n" +
                     "Name: " + player.getInventory().getItemInHand().getName() + "\n" +
                     "ID: " + player.getInventory().getItemInHand().getId() + "\n" +
                     "Damage: " + player.getInventory().getItemInHand().getDamage() + "/" + player.getInventory().getItemInHand().getMaxDurability() + "\n");
@@ -79,7 +79,7 @@ public class EventListener implements Listener {
                         LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopDataBySign(block.getLocation());
 
                         if(shopSignInfo.get("shopOwner").equals(username)) {
-                            player.sendMessage("システム>> 自分のショップからは購入できません");
+                            player.sendMessage(Main.MESSAGE_PREFIX+"自分のショップからは購入できません");
                             return;
                         }
 
@@ -87,7 +87,7 @@ public class EventListener implements Listener {
                         int priceIncludeCommission = (int) (price * Main.COMMISTION_RATIO);
                         int buyermoney = mainClass.moneySAPI.getMoney(player.getName());
                         if(buyermoney < priceIncludeCommission) {
-                            player.sendMessage("システム>> 所持金が不足しているため購入できません");
+                            player.sendMessage(Main.MESSAGE_PREFIX+"所持金が不足しているため購入できません");
                             break;
                         }
 
@@ -101,9 +101,9 @@ public class EventListener implements Listener {
                         }
                         Player shopOwner = mainClass.getServer().getPlayer(String.valueOf(shopSignInfo.get("shopOwner")));
                         if(itemNum < (int) shopSignInfo.get("saleNum")) {
-                            player.sendMessage("システム>> このショップは在庫切れです");
+                            player.sendMessage(Main.MESSAGE_PREFIX+"このショップは在庫切れです");
                             if(shopOwner != null) {
-                                shopOwner.sendMessage("システム>> あなたのチェストショップが在庫切れになっています！ 補給すべきもの " + pID + ":" + pMeta);
+                                shopOwner.sendMessage(Main.MESSAGE_PREFIX+"あなたのチェストショップが在庫切れになっています！ 補給すべきもの " + pID + ":" + pMeta);
                             }
                             return;
                         }
@@ -127,9 +127,9 @@ public class EventListener implements Listener {
                         mainClass.moneySAPI.reduceMoney(username, (int) (price * 0.05));
                         mainClass.moneySAPI.payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
 
-                        player.sendMessage("システム>> 購入処理が完了しました");
+                        player.sendMessage(Main.MESSAGE_PREFIX+"購入処理が完了しました");
                         if(shopOwner != null) {
-                            shopOwner.sendMessage("システム>> " + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + mainClass.moneySAPI.getMoneyUnit() + "）");
+                            shopOwner.sendMessage(Main.MESSAGE_PREFIX + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + mainClass.moneySAPI.getMoneyUnit() + "）");
                         }
                     }
                     break;
@@ -137,7 +137,7 @@ public class EventListener implements Listener {
                 case Block.CHEST:
                     if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
                         if(!MoneySChestShopAPI.getInstance().isOwnerBySign(block.getLocation(), player)) {
-                            player.sendMessage("システム>> このチェストは保護されています");
+                            player.sendMessage(Main.MESSAGE_PREFIX+"このチェストは保護されています");
                             event.setCancelled();
                         }
                     }
@@ -156,9 +156,9 @@ public class EventListener implements Listener {
                 if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
                     if(MoneySChestShopAPI.getInstance().isOwnerBySign(block.getLocation(), player)) {
                         MoneySChestShopAPI.getInstance().removeShopBySign(block.getLocation());
-                        player.sendMessage("システム>> チェストショップを閉じました");
+                        player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップを閉じました");
                     } else {
-                        player.sendMessage("システム>> この看板は保護されています");
+                        player.sendMessage(Main.MESSAGE_PREFIX+"この看板は保護されています");
                         event.setCancelled();
                     }
                 }
@@ -167,9 +167,9 @@ public class EventListener implements Listener {
                 if(MoneySChestShopAPI.getInstance().existsShopByChest(block.getLocation())) {
                     if(MoneySChestShopAPI.getInstance().isOwnerByChest(block.getLocation(), player)) {
                         MoneySChestShopAPI.getInstance().removeShopByChest(block.getLocation());
-                        player.sendMessage("システム>> チェストショップを閉じました");
+                        player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップを閉じました");
                     } else {
-                        player.sendMessage("システム>> このチェストは保護されています");
+                        player.sendMessage(Main.MESSAGE_PREFIX+"このチェストは保護されています");
                         event.setCancelled();
                     }
                 }
@@ -192,18 +192,18 @@ public class EventListener implements Listener {
                     itemMeta = Integer.parseInt(responseCustom.getInputResponse(2));
                     itemPrice = Integer.parseInt(responseCustom.getInputResponse(4));
                 } catch (NumberFormatException e) {
-                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。");
+                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。");
                 }
                 if (itemId <= 0 || itemAmount <= 0 || itemPrice < 0 || getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer())).getId() != Block.CHEST || itemMeta < 0) {
-                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。または看板がチェストに接しているか確認してください。");
+                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。または看板がチェストに接しているか確認してください。");
                 } else {
                     BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
                     sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * Main.COMMISTION_RATIO), event.getPlayer().getName());
                     MoneySChestShopAPI.getInstance().createShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
-                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
+                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
                 }
             } else {
-                event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "すべての入力欄に適切な値を入力してください。");
+                event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"すべての入力欄に適切な値を入力してください。");
             }
         }
     }

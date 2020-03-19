@@ -42,12 +42,15 @@
  *   - 1.3.2
  *     SQLite3DataProviderの修正とAPIの書き直しに伴う変更
  *     データベースの形式は維持。下位互換性確保。
+ *   - 1.3.3
+ *     メッセージ部分の変更
  *
  */
 
 package net.comorevi.moneyschestshop;
 
 import cn.nukkit.plugin.PluginBase;
+import cn.nukkit.utils.TextFormat;
 import net.comorevi.moneyapi.MoneySAPI;
 import net.comorevi.moneyschestshop.command.ChestShopCommand;
 import net.comorevi.moneyschestshop.command.IdCommand;
@@ -56,6 +59,7 @@ public class Main extends PluginBase {
 
     protected MoneySAPI moneySAPI;
     protected static final double COMMISTION_RATIO = 1.05;
+    public static final String MESSAGE_PREFIX = TextFormat.GRAY+"ChestShop>> "+TextFormat.RESET;
 
     @Override
     public void onEnable() {

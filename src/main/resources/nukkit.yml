@@ -1,6 +1,6 @@
 name: MoneySChestShop
 main: net.comorevi.moneyschestshop.Main
-version: 1.3.2
+version: 1.3.3
 load: POSTWORLD
 author: popkechupki
 api: ["1.0.0"]
