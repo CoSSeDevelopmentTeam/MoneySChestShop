@@ -1,36 +1,43 @@
 package net.comorevi.moneyschestshop;
 
+import FormAPI.api.FormAPI;
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
+import cn.nukkit.block.BlockID;
 import cn.nukkit.blockentity.BlockEntityChest;
+import cn.nukkit.blockentity.BlockEntitySign;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.block.BlockBreakEvent;
-import cn.nukkit.event.block.SignChangeEvent;
+import cn.nukkit.event.player.PlayerFormRespondedEvent;
 import cn.nukkit.event.player.PlayerInteractEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
+import cn.nukkit.form.element.*;
+import cn.nukkit.form.response.FormResponseCustom;
+import cn.nukkit.form.window.FormWindowCustom;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.TextFormat;
+import net.comorevi.moneyschestshop.util.DataCenter;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 public class EventListener implements Listener {
 
-    private MoneySChestShop mainClass;
-    private SQLite3DataProvider sqLite3DataProvider;
+    private Main mainClass;
+    private FormAPI formAPI = new FormAPI();
 
-    public EventListener(MoneySChestShop plugin, SQLite3DataProvider sql) {
+    public EventListener(Main plugin) {
         this.mainClass = plugin;
-        this.sqLite3DataProvider = sql;
+        formAPI.add("create-cshop", getCreateCShopWindw());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if(mainClass.containsUser(event.getPlayer().getName())) {
-            mainClass.removePlayerFromList(event.getPlayer(), event.getPlayer().getName());
-        }
+        if (DataCenter.existsIdCmdQueue(event.getPlayer())) DataCenter.removeIdCmdQueue(event.getPlayer());
+        if (DataCenter.existsEditCmdQueue(event.getPlayer())) DataCenter.removeEditCmdQueue(event.getPlayer());
     }
 
     @EventHandler
@@ -41,7 +48,7 @@ public class EventListener implements Listener {
         String blockName = block.getName();
         int blockId = block.getId();
         int blockMeta = block.getDamage();
-        if(mainClass.containsUser(username)) {
+        if(DataCenter.existsIdCmdQueue(player)) {
             player.sendMessage("システム>> BlockData" + "\n" +
                     "Name: " + blockName + "\n" +
                     "ID: " + blockId + "\n" +
@@ -51,84 +58,97 @@ public class EventListener implements Listener {
                     "ID: " + player.getInventory().getItemInHand().getId() + "\n" +
                     "Damage: " + player.getInventory().getItemInHand().getDamage() + "/" + player.getInventory().getItemInHand().getMaxDurability() + "\n");
             event.setCancelled();
-        }
-        
-        switch(blockId) {
-            case Block.SIGN_POST:
-            case Block.WALL_SIGN:
-                Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(sqLite3DataProvider.existsShop(signCondition)) {
-                    LinkedHashMap<String, Object> shopSignInfo = sqLite3DataProvider.getShopInfo(signCondition);
-                    
-                    
-                    if(shopSignInfo.get("shopOwner").equals(username)) {
-                        player.sendMessage("システム>> 自分のショップからは購入できません");
-                        return;
-                    }
-                    
-                    int price = (int) shopSignInfo.get("price");
-                    int priceIncludeCommission = (int) (price * 1.05);
-                    int buyermoney = mainClass.getMoneySAPI().getMoney(player.getName());
-                    if(buyermoney < priceIncludeCommission) {
-                        player.sendMessage("システム>> 所持金が不足しているため購入できません");
-                        break;
-                    }
-    
-                    BlockEntityChest chest = (BlockEntityChest) player.getLevel().getBlockEntity(new Vector3((int) shopSignInfo.get("chestX"), (int) shopSignInfo.get("chestY"), (int) shopSignInfo.get("chestZ")));
-                    int itemNum = 0;
-                    int pID = (int) shopSignInfo.get("productID");
-                    int pMeta = (int) shopSignInfo.get("productMeta");
-                    for(int i = 0; i < chest.getSize(); i++) {
-                        Item item = chest.getInventory().getItem(i);
-                        if(item.getId() == pID && item.getDamage() == pMeta) itemNum += item.getCount();
-                    }
-                    Player shopOwner = mainClass.getServer().getPlayer(String.valueOf(shopSignInfo.get("shopOwner")));
-                    if(itemNum < (int) shopSignInfo.get("saleNum")) {
-                        player.sendMessage("システム>> このショップは在庫切れです");
-                        if(shopOwner != null) {
-                            shopOwner.sendMessage("システム>> あなたのチェストショップが在庫切れになっています！ 補給すべきもの " + pID + ":" + pMeta);
+        } else if (DataCenter.existsEditCmdQueue(player)) {
+            switch (blockId) {
+                case Block.SIGN_POST:
+                case BlockID.WALL_SIGN:
+                    if (mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
+                        BlockEntitySign sign = (BlockEntitySign) mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation());
+                        if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()) != Block.get(Block.CHEST)) {
+                            player.showFormWindow(formAPI.get("create-cshop"), formAPI.getId("create-cshop"));
+                            DataCenter.addEditCmdQueue(player, block);
                         }
-                        return;
                     }
-                    
-                    Item shopItem = Item.get(pID, pMeta, (int) shopSignInfo.get("saleNum"));
-                    if(player.getInventory().canAddItem(shopItem)) player.getInventory().addItem(shopItem);
-                    
-                    int tmpNum = (int) shopSignInfo.get("saleNum");
-                    for(int i = 0; i < chest.getSize(); i++) {
-                        Item item = chest.getInventory().getItem(i);
-                        if(item.getId() == pID && item.getDamage() == pMeta) {
-                            if(item.getCount() <= tmpNum) {
-                                chest.getInventory().setItem(i, Item.get(Item.AIR, 0, 0));
-                                tmpNum -= item.getCount();
-                            } else {
-                                chest.getInventory().setItem(i, Item.get(item.getId(), pMeta, item.getCount() - tmpNum));
-                                break;
+                    break;
+            }
+        } else {
+            switch(blockId) {
+                case Block.SIGN_POST:
+                case Block.WALL_SIGN:
+                    Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
+                    if(MoneySChestShopAPI.getInstance().existsShop(signCondition)) {
+                        LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopData(signCondition);
+
+
+                        if(shopSignInfo.get("shopOwner").equals(username)) {
+                            player.sendMessage("システム>> 自分のショップからは購入できません");
+                            return;
+                        }
+
+                        int price = (int) shopSignInfo.get("price");
+                        int priceIncludeCommission = (int) (price * 1.05);
+                        int buyermoney = mainClass.moneySAPI.getMoney(player.getName());
+                        if(buyermoney < priceIncludeCommission) {
+                            player.sendMessage("システム>> 所持金が不足しているため購入できません");
+                            break;
+                        }
+
+                        BlockEntityChest chest = (BlockEntityChest) player.getLevel().getBlockEntity(new Vector3((int) shopSignInfo.get("chestX"), (int) shopSignInfo.get("chestY"), (int) shopSignInfo.get("chestZ")));
+                        int itemNum = 0;
+                        int pID = (int) shopSignInfo.get("productID");
+                        int pMeta = (int) shopSignInfo.get("productMeta");
+                        for(int i = 0; i < chest.getSize(); i++) {
+                            Item item = chest.getInventory().getItem(i);
+                            if(item.getId() == pID && item.getDamage() == pMeta) itemNum += item.getCount();
+                        }
+                        Player shopOwner = mainClass.getServer().getPlayer(String.valueOf(shopSignInfo.get("shopOwner")));
+                        if(itemNum < (int) shopSignInfo.get("saleNum")) {
+                            player.sendMessage("システム>> このショップは在庫切れです");
+                            if(shopOwner != null) {
+                                shopOwner.sendMessage("システム>> あなたのチェストショップが在庫切れになっています！ 補給すべきもの " + pID + ":" + pMeta);
+                            }
+                            return;
+                        }
+
+                        Item shopItem = Item.get(pID, pMeta, (int) shopSignInfo.get("saleNum"));
+                        if(player.getInventory().canAddItem(shopItem)) player.getInventory().addItem(shopItem);
+
+                        int tmpNum = (int) shopSignInfo.get("saleNum");
+                        for(int i = 0; i < chest.getSize(); i++) {
+                            Item item = chest.getInventory().getItem(i);
+                            if(item.getId() == pID && item.getDamage() == pMeta) {
+                                if(item.getCount() <= tmpNum) {
+                                    chest.getInventory().setItem(i, Item.get(Item.AIR, 0, 0));
+                                    tmpNum -= item.getCount();
+                                } else {
+                                    chest.getInventory().setItem(i, Item.get(item.getId(), pMeta, item.getCount() - tmpNum));
+                                    break;
+                                }
                             }
                         }
+                        mainClass.moneySAPI.reduceMoney(username, (int) (price * 0.05));
+                        mainClass.moneySAPI.payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
+
+                        player.sendMessage("システム>> 購入処理が完了しました");
+                        if(shopOwner != null) {
+                            shopOwner.sendMessage("システム>> " + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + mainClass.moneySAPI.getMoneyUnit() + "）");
+                        }
                     }
-                    mainClass.getMoneySAPI().reduceMoney(username, (int) (price * 0.05));
-                    mainClass.getMoneySAPI().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
-                    
-                    player.sendMessage("システム>> 購入処理が完了しました");
-                    if(shopOwner != null) {
-                        shopOwner.sendMessage("システム>> " + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + mainClass.getMoneySAPI().getMoneyUnit() + "）");
+                    break;
+
+                case Block.CHEST:
+                    Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
+                    if(MoneySChestShopAPI.getInstance().existsShop(chestCondition)) {
+                        if(!MoneySChestShopAPI.getInstance().isOwner(chestCondition, player)) {
+                            player.sendMessage("システム>> このチェストは保護されています");
+                            event.setCancelled();
+                        }
                     }
-                }
-                break;
-            
-            case Block.CHEST:
-                Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(sqLite3DataProvider.existsShop(chestCondition)) {
-                    if(!sqLite3DataProvider.isShopOwner(chestCondition, player)) {
-                        player.sendMessage("システム>> このチェストは保護されています");
-                        event.setCancelled();
-                    }
-                }
-                break;
+                    break;
+            }
         }
     }
-    
+
     @EventHandler
     public void onPlayerBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -137,9 +157,9 @@ public class EventListener implements Listener {
             case Block.SIGN_POST:
             case Block.WALL_SIGN:
                 Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(sqLite3DataProvider.existsShop(signCondition)) {
-                    if(sqLite3DataProvider.isShopOwner(signCondition, player)) {
-                        sqLite3DataProvider.removeShopBySign(signCondition);
+                if(MoneySChestShopAPI.getInstance().existsShop(signCondition)) {
+                    if(MoneySChestShopAPI.getInstance().isOwner(signCondition, player)) {
+                        MoneySChestShopAPI.getInstance().removeShopBySign(signCondition);
                         player.sendMessage("システム>> チェストショップを閉じました");
                     } else {
                         player.sendMessage("システム>> この看板は保護されています");
@@ -149,9 +169,9 @@ public class EventListener implements Listener {
                 break;
             case Block.CHEST:
                 Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(sqLite3DataProvider.existsShop(chestCondition)) {
-                    if(sqLite3DataProvider.isShopOwner(chestCondition, player)) {
-                        sqLite3DataProvider.removeShopByChest(chestCondition);
+                if(MoneySChestShopAPI.getInstance().existsShop(chestCondition)) {
+                    if(MoneySChestShopAPI.getInstance().isOwner(chestCondition, player)) {
+                        MoneySChestShopAPI.getInstance().removeShopByChest(chestCondition);
                         player.sendMessage("システム>> チェストショップを閉じました");
                     } else {
                         player.sendMessage("システム>> このチェストは保護されています");
@@ -163,65 +183,35 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void onSignChange(SignChangeEvent event) {
-        try {
-            if(event.getLine(0).equals("") && !event.getLine(1).equals("") && !event.getLine(2).equals("") && !event.getLine(3).equals("")) {
-                Player player = event.getPlayer();
-                String shopOwner = player.getName();
-                String[] productData = event.getLine(3).split(":");
-                int saleNum = 0;
-                int price = 0;
-                int priceIncludeCommission = 0;
-                int pID = 0;
-                int pMeta = 0;
+    public void onFormResponded(PlayerFormRespondedEvent event) {
+        if (event.getFormID() == formAPI.getId("create-cshop")) {
+            if (event.wasClosed()) return;
+            FormResponseCustom responseCustom = (FormResponseCustom) event.getResponse();
+            if (responseCustom.getInputResponse(1) != null && responseCustom.getInputResponse(2) != null && responseCustom.getInputResponse(4) != null) {
+                int itemId = 0;
+                int itemMeta = 0;
+                int itemAmount = (int) responseCustom.getSliderResponse(3);
+                int itemPrice = 0;
                 try {
-                    saleNum = Integer.parseInt(event.getLine(1));
-                    price = Integer.parseInt(event.getLine(2));
-                    priceIncludeCommission = (int) (price * 1.05);
+                    itemId = Integer.parseInt(responseCustom.getInputResponse(1));
+                    itemMeta = Integer.parseInt(responseCustom.getInputResponse(2));
+                    itemPrice = Integer.parseInt(responseCustom.getInputResponse(4));
                 } catch (NumberFormatException e) {
                     event.setCancelled();
-                    player.sendMessage("システム>> 不適切なデータが入力されました");
-                    return;
+                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。");
                 }
-                try {
-                    if(productData.length == 1) {
-                        pID = Integer.parseInt(event.getLine(3));
-                    } else {
-                        pID = Integer.parseInt(productData[0]);
-                        pMeta = Integer.parseInt(productData[1]);
-                    }
-                } catch (NumberFormatException e) {
+                if (itemId <= 0 || itemAmount <= 0 || itemPrice < 0 || getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer())) != Block.get(Block.CHEST) || itemMeta < 0) {
                     event.setCancelled();
+                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。または看板がチェストに接しているか確認してください。");
+                } else {
+                    BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
+                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + itemPrice * 1.05, event.getPlayer().getName());
+                    MoneySChestShopAPI.getInstance().registerShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
                 }
-
-                Block sign = event.getBlock();
-                Block chest = getSideChest(sign);
-                
-                if (!event.getLine(0).equals("")) return;
-                if (saleNum <= 0) return;
-                if (price < 0) return;
-                if (pID == 0) return;
-                if (chest == null) return;
-
-                String productName = Block.get(pID, pMeta).getName();
-                event.setLine(0, TextFormat.WHITE + shopOwner);
-                event.setLine(1, "数量/amount:" + saleNum);
-                event.setLine(2, "値段/price:" + priceIncludeCommission);
-                event.setLine(3, productName);
-	
-				Object[] signCondition = {(int) event.getBlock().x, (int) event.getBlock().y, (int) event.getBlock().z, event.getBlock().getLevel().getName()};
-				
-                if(sqLite3DataProvider.existsShop(signCondition)) {
-                    sqLite3DataProvider.updateShop(shopOwner, saleNum, price, pID, pMeta, sign);
-                    //player.sendMessage("システム>> チェストショップを更新しました");
-				} else {
-					sqLite3DataProvider.registerShop(shopOwner, saleNum, price, pID, pMeta, sign, chest);
-                    player.sendMessage("システム>> チェストショップを作成しました");
-				}
-				
+            } else {
+                event.setCancelled();
+                event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "すべての入力欄に適切な値を入力してください。");
             }
-        } catch(ArrayIndexOutOfBoundsException e) {
-            event.setCancelled();
         }
     }
 
@@ -236,5 +226,16 @@ public class EventListener implements Listener {
         block = block.getLevel().getBlock(new Vector3(pos.getX(), pos.getY(), pos.getZ() - 1));
         if(block.getId() == Block.CHEST) return block;
         return block;
+    }
+
+    private FormWindowCustom getCreateCShopWindw() {
+        Element[] elements = {
+                new ElementLabel("label, descriotion"),
+                new ElementInput("Item ID", "enter id..."),
+                new ElementInput("Item META(DAMAGE)", "enter meta..."),
+                new ElementSlider("Amount", 1, 64, 64),
+                new ElementInput("Price", "enter price...")
+        };
+        return new FormWindowCustom("Create - ChestShop", Arrays.asList(elements));
     }
 }

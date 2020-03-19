@@ -1,4 +1,4 @@
-package net.comorevi.moneyschestshop;
+package net.comorevi.moneyschestshop.util;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
@@ -8,22 +8,17 @@ import java.util.LinkedHashMap;
 
 public class SQLite3DataProvider {
 
-    MoneySChestShop mainClass;
-    String path;
-
-    public SQLite3DataProvider(MoneySChestShop plugin) {
-        this.mainClass = plugin;
-        this.path = plugin.getDataFolder().toString();
+    public SQLite3DataProvider() {
         connect();
     }
 
     public void removeShopBySign(Object[] condition) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            
+
             statement.executeUpdate("delete from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at removeShopSign");
@@ -32,20 +27,20 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at removeShopSign on close connection");
-                	e.printStackTrace();
+                    System.out.println(e.getMessage() + " : at removeShopSign on close connection");
+                    e.printStackTrace();
                 }
             }
         }
     }
-    
+
     public void removeShopByChest(Object[] condition) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            
+
             statement.executeUpdate("delete from ChestShop where chestX = " + condition[0] + " and chestY = " + condition[1] + " and chestZ = " + condition[2] + " and level = '" + condition[3] + "'");
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at removeShopChest");
@@ -54,7 +49,7 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at removeShopChest on close connection");
+                    System.out.println(e.getMessage() + " : at removeShopChest on close connection");
                     e.printStackTrace();
                 }
             }
@@ -74,7 +69,7 @@ public class SQLite3DataProvider {
     public void registerShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign, Block chest) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
@@ -86,23 +81,23 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at registerShop on close connection");
+                    System.out.println(e.getMessage() + " : at registerShop on close connection");
                     e.printStackTrace();
                 }
             }
         }
     }
-    
+
     public void updateShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            
+
             Object[] signCondition = {(int) sign.x, (int) sign.y, (int) sign.z};
             LinkedHashMap<String, Object> shopSignInfo = getShopInfo(signCondition);
-            
+
             statement.executeUpdate("update ChestShop set shopOwner = '" + shopOwner + "', saleNum = " + saleNum + ", price = " + price + ", productID = " + productID + ", productMeta = " + productMeta + " where id = " + shopSignInfo.get("id"));
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at updateShop");
@@ -117,11 +112,11 @@ public class SQLite3DataProvider {
             }
         }
     }
-    
+
     public LinkedHashMap<String, Object> getShopInfo(Object[] condition) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
@@ -140,7 +135,7 @@ public class SQLite3DataProvider {
                 put("chestY", rs.getInt("chestY"));
                 put("chestZ", rs.getInt("chestZ"));
             }};
-                
+
             return shopInfo;
         } catch(SQLException e) {
             System.err.println(e.getMessage() + " : at getShopInfo");
@@ -149,21 +144,21 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at getShopinfo on close connection");
+                    System.out.println(e.getMessage() + " : at getShopinfo on close connection");
                     e.printStackTrace();
                 }
             }
         }
         return null;
     }
-    
+
     public boolean isShopOwner(Object[] condition, Player player) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-    
+
             ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
             if(rs.getString("shopOwner").equals(player.getName())) return true;
         } catch(SQLException e) {
@@ -173,18 +168,18 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at isShopOwner on close connection");
+                    System.out.println(e.getMessage() + " : at isShopOwner on close connection");
                     e.printStackTrace();
                 }
             }
         }
         return false;
     }
-    
+
     public boolean existsShop(Object[] condition) {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
@@ -197,14 +192,14 @@ public class SQLite3DataProvider {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                	System.out.println(e.getMessage() + " : at existsShop on close connection");
+                    System.out.println(e.getMessage() + " : at existsShop on close connection");
                     e.printStackTrace();
                 }
             }
         }
         return false;
     }
-    
+
     private void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -213,10 +208,10 @@ public class SQLite3DataProvider {
         }
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + this.path + "/DataDB.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            
+
             statement.executeUpdate("create table if not exists ChestShop " +
                     "(" +
                     "id integer primary key autoincrement, " +
@@ -247,5 +242,4 @@ public class SQLite3DataProvider {
             }
         }
     }
-
 }
