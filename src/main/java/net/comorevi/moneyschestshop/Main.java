@@ -37,6 +37,11 @@
  *    MoneySAPIv3.1.2に対応、nukkitxにレポジトリを変更
  *  - 1.3.0
  *    ショップ作成にフォームを使用するように変更、依存ライブラリはFormAPI
+ *   - 1.3.1
+ *     メッセージに関わる部分を修正
+ *   - 1.3.2
+ *     SQLite3DataProviderの修正とAPIの書き直しに伴う変更
+ *     データベースの形式は維持。下位互換性確保。
  *
  */
 
@@ -50,6 +55,7 @@ import net.comorevi.moneyschestshop.command.IdCommand;
 public class Main extends PluginBase {
 
     protected MoneySAPI moneySAPI;
+    protected static final double COMMISTION_RATIO = 1.05;
 
     @Override
     public void onEnable() {
@@ -66,11 +72,9 @@ public class Main extends PluginBase {
         this.moneySAPI = (MoneySAPI) getServer().getPluginManager().getPlugin("MoneySAPI");
     }
 
-    /*
     @Override
     public void onDisable() {
-        //disconnect sql
+        MoneySChestShopAPI.getInstance().disconnectSQL();
     }
 
-     */
 }

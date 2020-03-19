@@ -1,126 +1,159 @@
 package net.comorevi.moneyschestshop.util;
 
-import cn.nukkit.Player;
-import cn.nukkit.block.Block;
+import cn.nukkit.level.Location;
 
 import java.sql.*;
 import java.util.LinkedHashMap;
 
 public class SQLite3DataProvider {
+    private Connection connection = null;
 
     public SQLite3DataProvider() {
-        connect();
-    }
-
-    public void removeShopBySign(Object[] condition) {
-        Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            this.connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
+            String sql = "create table if not exists ChestShop " +
+                    "(" +
+                    "id integer primary key autoincrement, " +
+                    "shopOwner text not null, " +
+                    "saleNum integer not null, " +
+                    "price integer not null, " +
+                    "productID integer not null, " +
+                    "productMeta integer not null, " +
+                    "signX integer not null, " +
+                    "signY integer not null, " +
+                    "signZ integer not null, " +
+                    "chestX integer not null, " +
+                    "chestY integer not null, " +
+                    "chestZ integer not null," +
+                    "level text not null" +
+                    ")";
+            PreparedStatement statement = connection.prepareStatement(sql);
             statement.setQueryTimeout(30);
-
-            statement.executeUpdate("delete from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
-        } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at removeShopSign");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at removeShopSign on close connection");
-                    e.printStackTrace();
-                }
-            }
+            statement.execute();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public void removeShopByChest(Object[] condition) {
-        Connection connection = null;
+    public boolean existsShopBySign(Location location) throws SQLException {
+        PreparedStatement statement = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
+            String sql = "select * from ChestShop where signX = ? and signY = ? and signZ = ? and level = ?";
+            statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
             statement.setQueryTimeout(30);
 
-            statement.executeUpdate("delete from ChestShop where chestX = " + condition[0] + " and chestY = " + condition[1] + " and chestZ = " + condition[2] + " and level = '" + condition[3] + "'");
+            return statement.executeQuery().next();
         } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at removeShopChest");
+            e.printStackTrace();
         } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at removeShopChest on close connection");
-                    e.printStackTrace();
-                }
-            }
+            if (statement != null) statement.close();
         }
-    }
-    /**
-     * register shop to database
-     *
-     * @param shopOwner
-     * @param saleNum
-     * @param price
-     * @param productID
-     * @param sign
-     * @param chest
-     * @return void
-     */
-    public void registerShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign, Block chest) {
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-
-            statement.executeUpdate("insert into ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ , level) values ('"+shopOwner+"', "+saleNum+", "+price+", "+productID+", "+productMeta+", "+sign.x+", "+sign.y+", "+sign.z+", "+chest.x+", "+chest.y+", "+chest.z+", '"+sign.getLevel().getName()+"')");
-        } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at registerShop");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at registerShop on close connection");
-                    e.printStackTrace();
-                }
-            }
-        }
+        return false;
     }
 
-    public void updateShop(String shopOwner, int saleNum, int price, int productID, int productMeta, Block sign) {
-        Connection connection = null;
+    public boolean existsShopByChest(Location location) throws SQLException {
+        PreparedStatement statement = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
+            String sql = "select * from ChestShop where chestX = ? and chestY = ? and chestZ = ? and level = ?";
+            statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
             statement.setQueryTimeout(30);
 
-            Object[] signCondition = {(int) sign.x, (int) sign.y, (int) sign.z};
-            LinkedHashMap<String, Object> shopSignInfo = getShopInfo(signCondition);
-
-            statement.executeUpdate("update ChestShop set shopOwner = '" + shopOwner + "', saleNum = " + saleNum + ", price = " + price + ", productID = " + productID + ", productMeta = " + productMeta + " where id = " + shopSignInfo.get("id"));
+            return statement.executeQuery().next();
         } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at updateShop");
+            e.printStackTrace();
         } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at updateShop on close connection");
-                    e.printStackTrace();
-                }
-            }
+            if (statement != null) statement.close();
+        }
+        return false;
+    }
+
+    public void addShop(String owner, int amount, int price, int itemId, int itemMeta, Location signLocation, Location chestLocation) {
+        try {
+            String sql = "insert into ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ , level) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, owner);
+            statement.setInt(2, amount);
+            statement.setInt(3, price);
+            statement.setInt(4, itemId);
+            statement.setInt(5, itemMeta);
+            statement.setInt(6, signLocation.getFloorX());
+            statement.setInt(7, signLocation.getFloorY());
+            statement.setInt(8, signLocation.getFloorZ());
+            statement.setInt(9, chestLocation.getFloorX());
+            statement.setInt(10, chestLocation.getFloorY());
+            statement.setInt(11, chestLocation.getFloorZ());
+            statement.setString(12, chestLocation.getLevel().getName());
+            statement.setQueryTimeout(30);
+
+            statement.execute();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public LinkedHashMap<String, Object> getShopInfo(Object[] condition) {
-        Connection connection = null;
+    public void removeShopBySign(Location location) {
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
+            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            String sql = "delete from ChestShop where signX = ? and signY = ? and signZ = ? and level = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
             statement.setQueryTimeout(30);
 
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
+            statement.execute();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeShopByChest(Location location) {
+        try {
+            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            String sql = "delete from ChestShop where chestX = ? and chestY = ? and chestZ = ? and level = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
+            statement.setQueryTimeout(30);
+
+            statement.execute();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public LinkedHashMap<String, Object> getShopInfoMapBySign(Location location) {
+        try {
+            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            String sql = "select * from ChestShop where signX = ? and signY = ? and signZ = ? and level = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
+            statement.setQueryTimeout(30);
+
+            ResultSet rs = statement.executeQuery();
             LinkedHashMap<String, Object> shopInfo = new LinkedHashMap<String, Object>(){{
                 put("id", rs.getInt("id"));
                 put("shopOwner", rs.getString("shopOwner"));
@@ -136,110 +169,54 @@ public class SQLite3DataProvider {
                 put("chestZ", rs.getInt("chestZ"));
             }};
 
+            statement.close();
+            rs.close();
             return shopInfo;
         } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at getShopInfo");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at getShopinfo on close connection");
-                    e.printStackTrace();
-                }
-            }
+            e.printStackTrace();
         }
-        return null;
+        throw new NullPointerException("There is no shop in that location.");
     }
 
-    public boolean isShopOwner(Object[] condition, Player player) {
-        Connection connection = null;
+    public LinkedHashMap<String, Object> getShopInfoMapByChest(Location location) {
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
+            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            String sql = "select * from ChestShop where chestX = ? and chestY = ? and chestZ = ? and level = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, location.getFloorX());
+            statement.setInt(2, location.getFloorY());
+            statement.setInt(3, location.getFloorZ());
+            statement.setString(4, location.getLevel().getName());
             statement.setQueryTimeout(30);
 
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
-            if(rs.getString("shopOwner").equals(player.getName())) return true;
+            ResultSet rs = statement.executeQuery();
+            LinkedHashMap<String, Object> shopInfo = new LinkedHashMap<String, Object>(){{
+                put("id", rs.getInt("id"));
+                put("shopOwner", rs.getString("shopOwner"));
+                put("saleNum", rs.getInt("saleNum"));
+                put("price", rs.getInt("price"));
+                put("productID", rs.getInt("productID"));
+                put("productMeta", rs.getInt("productMeta"));
+                put("signX", rs.getInt("signX"));
+                put("signY", rs.getInt("signY"));
+                put("signZ", rs.getInt("signZ"));
+                put("chestX", rs.getInt("chestX"));
+                put("chestY", rs.getInt("chestY"));
+                put("chestZ", rs.getInt("chestZ"));
+            }};
+
+            statement.close();
+            rs.close();
+            return shopInfo;
         } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at isShopOwner");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at isShopOwner on close connection");
-                    e.printStackTrace();
-                }
-            }
+            e.printStackTrace();
         }
-        return false;
+        throw new NullPointerException("There is no shop in that location.");
     }
 
-    public boolean existsShop(Object[] condition) {
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-
-            ResultSet rs = statement.executeQuery("select * from ChestShop where signX = " + condition[0] + " and signY = " + condition[1] + " and signZ = " + condition[2] + " and level = '" + condition[3] + "'");
-            return rs.next();
-        } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at existsShop");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage() + " : at existsShop on close connection");
-                    e.printStackTrace();
-                }
-            }
-        }
-        return false;
-    }
-
-    private void connect() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        }catch(Exception e){
-            System.err.println(e.getMessage() + " : at connect");
-        }
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection("jdbc:sqlite:./plugins/MoneySChestShop/DataDB.db");
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-
-            statement.executeUpdate("create table if not exists ChestShop " +
-                    "(" +
-                    "id integer primary key autoincrement, " +
-                    "shopOwner text not null, " +
-                    "saleNum integer not null, " +
-                    "price integer not null, " +
-                    "productID integer not null, " +
-                    "productMeta integer not null, " +
-                    "signX integer not null, " +
-                    "signY integer not null, " +
-                    "signZ integer not null, " +
-                    "chestX integer not null, " +
-                    "chestY integer not null, " +
-                    "chestZ integer not null," +
-                    "level text not null" +
-                    ")"
-            );
-        } catch(SQLException e) {
-            System.err.println(e.getMessage() + " : at createDB");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    System.err.println(e.getMessage() + " : at createDB connection close");
-                }
-            }
+    public void DisconnectSQL() throws SQLException {
+        if (connection != null) {
+            connection.close();
         }
     }
 }

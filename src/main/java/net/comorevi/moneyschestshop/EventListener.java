@@ -75,9 +75,8 @@ public class EventListener implements Listener {
             switch(blockId) {
                 case Block.SIGN_POST:
                 case Block.WALL_SIGN:
-                    Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                    if(MoneySChestShopAPI.getInstance().existsShop(signCondition)) {
-                        LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopData(signCondition);
+                    if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
+                        LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopDataBySign(block.getLocation());
 
                         if(shopSignInfo.get("shopOwner").equals(username)) {
                             player.sendMessage("システム>> 自分のショップからは購入できません");
@@ -85,7 +84,7 @@ public class EventListener implements Listener {
                         }
 
                         int price = (int) shopSignInfo.get("price");
-                        int priceIncludeCommission = (int) (price * 1.05);
+                        int priceIncludeCommission = (int) (price * Main.COMMISTION_RATIO);
                         int buyermoney = mainClass.moneySAPI.getMoney(player.getName());
                         if(buyermoney < priceIncludeCommission) {
                             player.sendMessage("システム>> 所持金が不足しているため購入できません");
@@ -136,9 +135,8 @@ public class EventListener implements Listener {
                     break;
 
                 case Block.CHEST:
-                    Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                    if(MoneySChestShopAPI.getInstance().existsShop(chestCondition)) {
-                        if(!MoneySChestShopAPI.getInstance().isOwner(chestCondition, player)) {
+                    if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
+                        if(!MoneySChestShopAPI.getInstance().isOwnerBySign(block.getLocation(), player)) {
                             player.sendMessage("システム>> このチェストは保護されています");
                             event.setCancelled();
                         }
@@ -155,10 +153,9 @@ public class EventListener implements Listener {
         switch(block.getId()) {
             case Block.SIGN_POST:
             case Block.WALL_SIGN:
-                Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(MoneySChestShopAPI.getInstance().existsShop(signCondition)) {
-                    if(MoneySChestShopAPI.getInstance().isOwner(signCondition, player)) {
-                        MoneySChestShopAPI.getInstance().removeShopBySign(signCondition);
+                if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
+                    if(MoneySChestShopAPI.getInstance().isOwnerBySign(block.getLocation(), player)) {
+                        MoneySChestShopAPI.getInstance().removeShopBySign(block.getLocation());
                         player.sendMessage("システム>> チェストショップを閉じました");
                     } else {
                         player.sendMessage("システム>> この看板は保護されています");
@@ -167,10 +164,9 @@ public class EventListener implements Listener {
                 }
                 break;
             case Block.CHEST:
-                Object[] chestCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
-                if(MoneySChestShopAPI.getInstance().existsShop(chestCondition)) {
-                    if(MoneySChestShopAPI.getInstance().isOwner(chestCondition, player)) {
-                        MoneySChestShopAPI.getInstance().removeShopByChest(chestCondition);
+                if(MoneySChestShopAPI.getInstance().existsShopByChest(block.getLocation())) {
+                    if(MoneySChestShopAPI.getInstance().isOwnerByChest(block.getLocation(), player)) {
+                        MoneySChestShopAPI.getInstance().removeShopByChest(block.getLocation());
                         player.sendMessage("システム>> チェストショップを閉じました");
                     } else {
                         player.sendMessage("システム>> このチェストは保護されています");
@@ -202,8 +198,8 @@ public class EventListener implements Listener {
                     event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。または看板がチェストに接しているか確認してください。");
                 } else {
                     BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
-                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * 1.05), event.getPlayer().getName());
-                    MoneySChestShopAPI.getInstance().registerShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
+                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * Main.COMMISTION_RATIO), event.getPlayer().getName());
+                    MoneySChestShopAPI.getInstance().createShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
                     event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
                 }
             } else {
