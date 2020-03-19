@@ -64,7 +64,7 @@ public class EventListener implements Listener {
                 case BlockID.WALL_SIGN:
                     if (mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
                         BlockEntitySign sign = (BlockEntitySign) mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation());
-                        if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()) != Block.get(Block.CHEST)) {
+                        if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()).getId() == Block.CHEST) {
                             player.showFormWindow(formAPI.get("create-cshop"), formAPI.getId("create-cshop"));
                             DataCenter.addEditCmdQueue(player, block);
                         }
@@ -78,7 +78,6 @@ public class EventListener implements Listener {
                     Object[] signCondition = {(int) block.x, (int) block.y, (int) block.z, block.getLevel().getName()};
                     if(MoneySChestShopAPI.getInstance().existsShop(signCondition)) {
                         LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopData(signCondition);
-
 
                         if(shopSignInfo.get("shopOwner").equals(username)) {
                             player.sendMessage("システム>> 自分のショップからは購入できません");
@@ -197,19 +196,17 @@ public class EventListener implements Listener {
                     itemMeta = Integer.parseInt(responseCustom.getInputResponse(2));
                     itemPrice = Integer.parseInt(responseCustom.getInputResponse(4));
                 } catch (NumberFormatException e) {
-                    event.setCancelled();
                     event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。");
                 }
-                if (itemId <= 0 || itemAmount <= 0 || itemPrice < 0 || getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer())) != Block.get(Block.CHEST) || itemMeta < 0) {
-                    event.setCancelled();
+                if (itemId <= 0 || itemAmount <= 0 || itemPrice < 0 || getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer())).getId() != Block.CHEST || itemMeta < 0) {
                     event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "適切な値を入力してください。または看板がチェストに接しているか確認してください。");
                 } else {
                     BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
-                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + itemPrice * 1.05, event.getPlayer().getName());
+                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * 1.05), event.getPlayer().getName());
                     MoneySChestShopAPI.getInstance().registerShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
+                    event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
                 }
             } else {
-                event.setCancelled();
                 event.getPlayer().sendMessage(TextFormat.GRAY + "システム>>" + TextFormat.RESET + "すべての入力欄に適切な値を入力してください。");
             }
         }
@@ -230,11 +227,11 @@ public class EventListener implements Listener {
 
     private FormWindowCustom getCreateCShopWindw() {
         Element[] elements = {
-                new ElementLabel("label, descriotion"),
-                new ElementInput("Item ID", "enter id..."),
-                new ElementInput("Item META(DAMAGE)", "enter meta..."),
-                new ElementSlider("Amount", 1, 64, 64),
-                new ElementInput("Price", "enter price...")
+                new ElementLabel("ショップの情報を入力してください。適切な値を入力しなければ作成できません。"),
+                new ElementInput("Item ID", "1以上256以下で入力..."),
+                new ElementInput("Item META(DAMAGE)", "メタ値を入力...", String.valueOf(0)),
+                new ElementSlider("Amount", 1, 64, 1, 4),
+                new ElementInput("Price", "0以上で入力...")
         };
         return new FormWindowCustom("Create - ChestShop", Arrays.asList(elements));
     }
