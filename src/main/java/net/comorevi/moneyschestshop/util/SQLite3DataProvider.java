@@ -108,7 +108,7 @@ public class SQLite3DataProvider {
 
     public void removeShopBySign(Location location) {
         try {
-            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            if (!existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
             String sql = "delete from ChestShop where signX = ? and signY = ? and signZ = ? and level = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setInt(1, location.getFloorX());
@@ -126,7 +126,7 @@ public class SQLite3DataProvider {
 
     public void removeShopByChest(Location location) {
         try {
-            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            if (!existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
             String sql = "delete from ChestShop where chestX = ? and chestY = ? and chestZ = ? and level = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setInt(1, location.getFloorX());
@@ -144,7 +144,7 @@ public class SQLite3DataProvider {
 
     public LinkedHashMap<String, Object> getShopInfoMapBySign(Location location) {
         try {
-            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            if (!existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
             String sql = "select * from ChestShop where signX = ? and signY = ? and signZ = ? and level = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setInt(1, location.getFloorX());
@@ -180,7 +180,7 @@ public class SQLite3DataProvider {
 
     public LinkedHashMap<String, Object> getShopInfoMapByChest(Location location) {
         try {
-            if (existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
+            if (!existsShopBySign(location)) throw new NullPointerException("There is no shop in that location.");
             String sql = "select * from ChestShop where chestX = ? and chestY = ? and chestZ = ? and level = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setInt(1, location.getFloorX());
