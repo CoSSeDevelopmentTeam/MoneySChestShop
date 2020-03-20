@@ -46,8 +46,10 @@
  *     メッセージ部分の変更
  *  - 1.4.0
  *    MoneySAPI v4.0.0対応
+ *   - 1.4.1
+ *     手数料の割合をMoneySAPIから取得するように変更
  *
- */
+ **/
 
 package net.comorevi.moneyschestshop;
 
@@ -57,7 +59,6 @@ import net.comorevi.moneyschestshop.command.ChestShopCommand;
 import net.comorevi.moneyschestshop.command.IdCommand;
 
 public class Main extends PluginBase {
-    protected static final double COMMISTION_RATIO = 1.05;
     public static final String MESSAGE_PREFIX = TextFormat.GRAY+"ChestShop>> "+TextFormat.RESET;
 
     @Override

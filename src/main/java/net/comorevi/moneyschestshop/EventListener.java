@@ -89,7 +89,7 @@ public class EventListener implements Listener {
                         }
 
                         int price = (int) shopSignInfo.get("price");
-                        int priceIncludeCommission = (int) (price * Main.COMMISTION_RATIO);
+                        int priceIncludeCommission = (int) (price * TAXType.CHEST_SHOP);
                         if(MoneySAPI.getInstance().getMoney(player) < priceIncludeCommission) {
                             player.sendMessage(Main.MESSAGE_PREFIX+"所持金が不足しているため購入できません");
                             break;
@@ -201,7 +201,7 @@ public class EventListener implements Listener {
                     event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。または看板がチェストに接しているか確認してください。");
                 } else {
                     BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
-                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * Main.COMMISTION_RATIO), event.getPlayer().getName());
+                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * TAXType.CHEST_SHOP), event.getPlayer().getName());
                     MoneySChestShopAPI.getInstance().createShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
                     event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
                 }
