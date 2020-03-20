@@ -19,6 +19,8 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.TextFormat;
+import net.comorevi.moneyapi.MoneySAPI;
+import net.comorevi.moneyapi.util.TAXType;
 import net.comorevi.moneyschestshop.util.DataCenter;
 
 import java.util.Arrays;
@@ -62,12 +64,15 @@ public class EventListener implements Listener {
             switch (blockId) {
                 case Block.SIGN_POST:
                 case BlockID.WALL_SIGN:
-                    if (mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
-                        BlockEntitySign sign = (BlockEntitySign) mainClass.getServer().getLevelByName(block.level.getName()).getBlockEntity(block.getLocation());
+                    event.setCancelled();
+                    if (player.getLevel().getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
+                        BlockEntitySign sign = (BlockEntitySign) player.getLevel().getBlockEntity(block.getLocation());
                         if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()).getId() == Block.CHEST) {
                             player.showFormWindow(formAPI.get("create-cshop"), formAPI.getId("create-cshop"));
                             DataCenter.addEditCmdQueue(player, block);
                         }
+                    } else {
+                        player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップにアクセスするには/cshopでショップ作成モードを無効にしてください。");
                     }
                     break;
             }
@@ -85,8 +90,7 @@ public class EventListener implements Listener {
 
                         int price = (int) shopSignInfo.get("price");
                         int priceIncludeCommission = (int) (price * Main.COMMISTION_RATIO);
-                        int buyermoney = mainClass.moneySAPI.getMoney(player.getName());
-                        if(buyermoney < priceIncludeCommission) {
+                        if(MoneySAPI.getInstance().getMoney(player) < priceIncludeCommission) {
                             player.sendMessage(Main.MESSAGE_PREFIX+"所持金が不足しているため購入できません");
                             break;
                         }
@@ -124,12 +128,11 @@ public class EventListener implements Listener {
                                 }
                             }
                         }
-                        mainClass.moneySAPI.reduceMoney(username, (int) (price * 0.05));
-                        mainClass.moneySAPI.payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), (int) shopSignInfo.get("price"));
+                        MoneySAPI.getInstance().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), price, TAXType.CHEST_SHOP);
 
                         player.sendMessage(Main.MESSAGE_PREFIX+"購入処理が完了しました");
                         if(shopOwner != null) {
-                            shopOwner.sendMessage(Main.MESSAGE_PREFIX + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + mainClass.moneySAPI.getMoneyUnit() + "）");
+                            shopOwner.sendMessage(Main.MESSAGE_PREFIX + username + "が" + pID + ":" + pMeta + "を購入しました （" + shopSignInfo.get("price") + MoneySAPI.UNIT + "）");
                         }
                     }
                     break;

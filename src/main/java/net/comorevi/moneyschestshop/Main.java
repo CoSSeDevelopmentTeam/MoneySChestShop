@@ -44,6 +44,8 @@
  *     データベースの形式は維持。下位互換性確保。
  *   - 1.3.3
  *     メッセージ部分の変更
+ *  - 1.4.0
+ *    MoneySAPI v4.0.0対応
  *
  */
 
@@ -51,13 +53,10 @@ package net.comorevi.moneyschestshop;
 
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.TextFormat;
-import net.comorevi.moneyapi.MoneySAPI;
 import net.comorevi.moneyschestshop.command.ChestShopCommand;
 import net.comorevi.moneyschestshop.command.IdCommand;
 
 public class Main extends PluginBase {
-
-    protected MoneySAPI moneySAPI;
     protected static final double COMMISTION_RATIO = 1.05;
     public static final String MESSAGE_PREFIX = TextFormat.GRAY+"ChestShop>> "+TextFormat.RESET;
 
@@ -72,8 +71,6 @@ public class Main extends PluginBase {
         //コマンドを登録
         this.getServer().getCommandMap().register("id", new IdCommand("id"));
         this.getServer().getCommandMap().register("cshop", new ChestShopCommand("cshop"));
-        //
-        this.moneySAPI = (MoneySAPI) getServer().getPluginManager().getPlugin("MoneySAPI");
     }
 
     @Override
