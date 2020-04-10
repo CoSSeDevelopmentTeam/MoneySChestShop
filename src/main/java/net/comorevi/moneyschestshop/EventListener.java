@@ -7,6 +7,7 @@ import cn.nukkit.block.BlockID;
 import cn.nukkit.blockentity.BlockEntityChest;
 import cn.nukkit.blockentity.BlockEntitySign;
 import cn.nukkit.event.EventHandler;
+import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.block.BlockBreakEvent;
 import cn.nukkit.event.player.PlayerFormRespondedEvent;
@@ -19,7 +20,7 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.TextFormat;
-import net.comorevi.cphone.presenter.SharingData;
+import net.comorevi.cphone.cphone.event.CPhoneOpenEvent;
 import net.comorevi.moneyapi.MoneySAPI;
 import net.comorevi.moneyapi.util.TAXType;
 import net.comorevi.moneyschestshop.util.DataCenter;
@@ -31,12 +32,10 @@ public class EventListener implements Listener {
 
     private Main mainClass;
     private FormAPI formAPI = new FormAPI();
-    private Boolean isCPhoneLoaded;
 
     public EventListener(Main plugin) {
         this.mainClass = plugin;
         formAPI.add("create-cshop", getCreateCShopWindw());
-        if (SharingData.pluginInstance != null) isCPhoneLoaded = true;
     }
 
     @EventHandler
@@ -54,11 +53,6 @@ public class EventListener implements Listener {
         int blockId = block.getId();
         int blockMeta = block.getDamage();
         if(DataCenter.existsIdCmdQueue(player)) {
-            if (isCPhoneLoaded && event.getPlayer().getInventory().getItemInHand().getId() == SharingData.triggerItemId) {
-                event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"しふぉんを持たないでください。");
-                return;
-            }
-
             player.sendMessage(Main.MESSAGE_PREFIX+"BlockData" + "\n" +
                     "- Name: " + blockName + ", " +
                     "ID: " + blockId + ", " +
@@ -72,12 +66,6 @@ public class EventListener implements Listener {
             switch (blockId) {
                 case Block.SIGN_POST:
                 case BlockID.WALL_SIGN:
-                    if (isCPhoneLoaded && event.getPlayer().getInventory().getItemInHand().getId() == SharingData.triggerItemId) {
-                        event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"しふぉんを持たないでください。");
-                        return;
-                    }
-
-                    event.setCancelled();
                     if (player.getLevel().getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
                         BlockEntitySign sign = (BlockEntitySign) player.getLevel().getBlockEntity(block.getLocation());
                         if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()).getId() == Block.CHEST) {
@@ -87,6 +75,7 @@ public class EventListener implements Listener {
                     } else {
                         player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップにアクセスするには/cshopでショップ作成モードを無効にしてください。");
                     }
+                    event.setCancelled();
                     break;
             }
         } else {
@@ -94,10 +83,6 @@ public class EventListener implements Listener {
                 case Block.SIGN_POST:
                 case Block.WALL_SIGN:
                     if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
-                        if (isCPhoneLoaded && event.getPlayer().getInventory().getItemInHand().getId() == SharingData.triggerItemId) {
-                            event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"しふぉんを持たないでください。");
-                            return;
-                        }
 
                         LinkedHashMap<String, Object> shopSignInfo = MoneySChestShopAPI.getInstance().getShopDataBySign(block.getLocation());
 
@@ -157,11 +142,6 @@ public class EventListener implements Listener {
 
                 case Block.CHEST:
                     if(MoneySChestShopAPI.getInstance().existsShopBySign(block.getLocation())) {
-                        if (isCPhoneLoaded && event.getPlayer().getInventory().getItemInHand().getId() == SharingData.triggerItemId) {
-                            event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"しふぉんを持たないでください。");
-                            event.setCancelled();
-                        }
-
                         if(!MoneySChestShopAPI.getInstance().isOwnerBySign(block.getLocation(), player)) {
                             player.sendMessage(Main.MESSAGE_PREFIX+"このチェストは保護されています");
                             event.setCancelled();
@@ -203,7 +183,7 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onFormResponded(PlayerFormRespondedEvent event) {
         if (event.getFormID() == formAPI.getId("create-cshop")) {
             if (event.wasClosed()) return;
@@ -232,6 +212,11 @@ public class EventListener implements Listener {
                 event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"すべての入力欄に適切な値を入力してください。");
             }
         }
+    }
+
+    @EventHandler
+    public void onCPhoneOpen(CPhoneOpenEvent event) {
+        if (DataCenter.existsIdCmdQueue(event.getCPhone().getPlayer()) || DataCenter.existsEditCmdQueue(event.getCPhone().getPlayer())) event.setCancelled();
     }
 
     private Block getSideChest(Position pos) {
