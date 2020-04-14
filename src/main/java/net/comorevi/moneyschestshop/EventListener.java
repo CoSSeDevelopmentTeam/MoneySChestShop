@@ -1,41 +1,39 @@
 package net.comorevi.moneyschestshop;
 
-import FormAPI.api.FormAPI;
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.block.BlockID;
 import cn.nukkit.blockentity.BlockEntityChest;
 import cn.nukkit.blockentity.BlockEntitySign;
 import cn.nukkit.event.EventHandler;
-import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.block.BlockBreakEvent;
-import cn.nukkit.event.player.PlayerFormRespondedEvent;
 import cn.nukkit.event.player.PlayerInteractEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
-import cn.nukkit.form.element.*;
-import cn.nukkit.form.response.FormResponseCustom;
-import cn.nukkit.form.window.FormWindowCustom;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
-import cn.nukkit.utils.TextFormat;
-import net.comorevi.cphone.cphone.event.CPhoneOpenEvent;
+import net.comorevi.cphone.presenter.SharingData;
 import net.comorevi.moneyapi.MoneySAPI;
 import net.comorevi.moneyapi.util.TAXType;
 import net.comorevi.moneyschestshop.util.DataCenter;
+import net.comorevi.moneyschestshop.util.FormManager;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 public class EventListener implements Listener {
 
     private Main mainClass;
-    private FormAPI formAPI = new FormAPI();
+    private FormManager form = new FormManager();
+    private Boolean isCPhoneLoaded;
 
     public EventListener(Main plugin) {
         this.mainClass = plugin;
-        formAPI.add("create-cshop", getCreateCShopWindw());
+        if (mainClass.getServer().getPluginManager().getPlugin("CPhone") == null) {
+            this.isCPhoneLoaded = false;
+        } else {
+            this.isCPhoneLoaded = true;
+        }
     }
 
     @EventHandler
@@ -66,11 +64,16 @@ public class EventListener implements Listener {
             switch (blockId) {
                 case Block.SIGN_POST:
                 case BlockID.WALL_SIGN:
+                    if (isCPhoneLoaded && event.getPlayer().getInventory().getItemInHand().getId() == SharingData.triggerItemId) {
+                        event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"しふぉんを持たずに看板をヒットしてください。");
+                        event.setCancelled();
+                        return;
+                    }
                     if (player.getLevel().getBlockEntity(block.getLocation()) instanceof BlockEntitySign) {
                         BlockEntitySign sign = (BlockEntitySign) player.getLevel().getBlockEntity(block.getLocation());
                         if (sign.getText()[0].equals("cshop") && sign.getText()[1].equals(player.getName()) && getSideChest(block.getLocation()).getId() == Block.CHEST) {
-                            player.showFormWindow(formAPI.get("create-cshop"), formAPI.getId("create-cshop"));
                             DataCenter.addEditCmdQueue(player, block);
+                            form.sendCreateCShopWindow(player);
                         }
                     } else {
                         player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップにアクセスするには/cshopでショップ作成モードを無効にしてください。");
@@ -183,42 +186,6 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
-    public void onFormResponded(PlayerFormRespondedEvent event) {
-        if (event.getFormID() == formAPI.getId("create-cshop")) {
-            if (event.wasClosed()) return;
-            FormResponseCustom responseCustom = (FormResponseCustom) event.getResponse();
-            if (responseCustom.getInputResponse(1) != null && responseCustom.getInputResponse(2) != null && responseCustom.getInputResponse(4) != null) {
-                int itemId = 0;
-                int itemMeta = 0;
-                int itemAmount = (int) responseCustom.getSliderResponse(3);
-                int itemPrice = 0;
-                try {
-                    itemId = Integer.parseInt(responseCustom.getInputResponse(1));
-                    itemMeta = Integer.parseInt(responseCustom.getInputResponse(2));
-                    itemPrice = Integer.parseInt(responseCustom.getInputResponse(4));
-                } catch (NumberFormatException e) {
-                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。");
-                }
-                if (itemId <= 0 || itemAmount <= 0 || itemPrice < 0 || getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer())).getId() != Block.CHEST || itemMeta < 0) {
-                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。または看板がチェストに接しているか確認してください。");
-                } else {
-                    BlockEntitySign sign = (BlockEntitySign) event.getPlayer().getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation());
-                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * TAXType.CHEST_SHOP), event.getPlayer().getName());
-                    MoneySChestShopAPI.getInstance().createShop(event.getPlayer().getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(event.getPlayer()).getLocation()));
-                    event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
-                }
-            } else {
-                event.getPlayer().sendMessage(Main.MESSAGE_PREFIX+"すべての入力欄に適切な値を入力してください。");
-            }
-        }
-    }
-
-    @EventHandler
-    public void onCPhoneOpen(CPhoneOpenEvent event) {
-        if (DataCenter.existsIdCmdQueue(event.getCPhone().getPlayer()) || DataCenter.existsEditCmdQueue(event.getCPhone().getPlayer())) event.setCancelled();
-    }
-
     private Block getSideChest(Position pos) {
         Block block = null;
         block = pos.getLevel().getBlock(new Vector3(pos.getX() + 1, pos.getY(), pos.getZ()));
@@ -230,16 +197,5 @@ public class EventListener implements Listener {
         block = block.getLevel().getBlock(new Vector3(pos.getX(), pos.getY(), pos.getZ() - 1));
         if(block.getId() == Block.CHEST) return block;
         return block;
-    }
-
-    private FormWindowCustom getCreateCShopWindw() {
-        Element[] elements = {
-                new ElementLabel("ショップの情報を入力してください。適切な値を入力しなければ作成できません。"),
-                new ElementInput("Item ID", "1以上256以下で入力..."),
-                new ElementInput("Item META(DAMAGE)", "メタ値を入力...", String.valueOf(0)),
-                new ElementSlider("Amount", 1, 64, 1, 4),
-                new ElementInput("Price", "0以上で入力...")
-        };
-        return new FormWindowCustom("Create - ChestShop", Arrays.asList(elements));
     }
 }
