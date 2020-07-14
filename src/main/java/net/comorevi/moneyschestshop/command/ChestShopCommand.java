@@ -3,7 +3,6 @@ package net.comorevi.moneyschestshop.command;
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
-import cn.nukkit.utils.TextFormat;
 import net.comorevi.moneyschestshop.Main;
 import net.comorevi.moneyschestshop.util.DataCenter;
 

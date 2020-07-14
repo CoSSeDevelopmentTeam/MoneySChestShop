@@ -15,7 +15,7 @@ import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import net.comorevi.cphone.presenter.SharingData;
 import net.comorevi.moneyapi.MoneySAPI;
-import net.comorevi.moneyapi.util.TAXType;
+import net.comorevi.moneyapi.util.TaxType;
 import net.comorevi.moneyschestshop.util.DataCenter;
 import net.comorevi.moneyschestshop.util.FormManager;
 
@@ -95,8 +95,7 @@ public class EventListener implements Listener {
                         }
 
                         int price = (int) shopSignInfo.get("price");
-                        int priceIncludeCommission = (int) (price * TAXType.CHEST_SHOP);
-                        if(MoneySAPI.getInstance().getMoney(player) < priceIncludeCommission) {
+                        if (MoneySAPI.getInstance().isPayable(player, price, TaxType.USER_SHOP)) {
                             player.sendMessage(Main.MESSAGE_PREFIX+"所持金が不足しているため購入できません");
                             break;
                         }
@@ -134,7 +133,7 @@ public class EventListener implements Listener {
                                 }
                             }
                         }
-                        MoneySAPI.getInstance().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), price, TAXType.CHEST_SHOP);
+                        MoneySAPI.getInstance().payMoney(username, String.valueOf(shopSignInfo.get("shopOwner")), price, TaxType.USER_SHOP);
 
                         player.sendMessage(Main.MESSAGE_PREFIX+"購入処理が完了しました");
                         if(shopOwner != null) {

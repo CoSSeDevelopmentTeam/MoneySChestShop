@@ -8,7 +8,7 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.TextFormat;
-import net.comorevi.moneyapi.util.TAXType;
+import net.comorevi.moneyapi.util.TaxType;
 import net.comorevi.moneyschestshop.Main;
 import net.comorevi.moneyschestshop.MoneySChestShopAPI;
 import ru.nukkitx.forms.elements.CustomForm;
@@ -35,7 +35,7 @@ public class FormManager {
                     player.sendMessage(Main.MESSAGE_PREFIX+"適切な値を入力してください。または看板がチェストに接しているか確認してください。");
                 } else {
                     BlockEntitySign sign = (BlockEntitySign) player.getLevel().getBlockEntity(DataCenter.getRegisteredBlockByEditCmdQueue(player).getLocation());
-                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * TAXType.CHEST_SHOP), player.getName());
+                    sign.setText(TextFormat.WHITE + Item.get(itemId).getName(), "個数: " + itemAmount, "値段(手数料込): " + (int) (itemPrice * TaxType.USER_SHOP.getRatio()), player.getName());
                     MoneySChestShopAPI.getInstance().createShop(player.getName(), itemAmount, itemPrice, itemId, itemMeta, DataCenter.getRegisteredBlockByEditCmdQueue(player), getSideChest(DataCenter.getRegisteredBlockByEditCmdQueue(player).getLocation()));
                     player.sendMessage(Main.MESSAGE_PREFIX+"チェストショップを作成しました。\n編集モードをオフにするには/cshopを実行。");
                 }

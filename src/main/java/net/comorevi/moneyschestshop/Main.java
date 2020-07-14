@@ -78,8 +78,8 @@ public class Main extends PluginBase {
         //イベントを登録
         this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
         //コマンドを登録
-        this.getServer().getCommandMap().register("id", new IdCommand("id"));
-        this.getServer().getCommandMap().register("cshop", new ChestShopCommand("cshop"));
+        this.getServer().getCommandMap().register("MoneySChestShop", new IdCommand("id"));
+        this.getServer().getCommandMap().register("MoneySChestShop", new ChestShopCommand("cshop"));
     }
 
     @Override
