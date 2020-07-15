@@ -1,4 +1,4 @@
-package net.comorevi.moneyschestshop.util;
+package net.comorevi.np.moneys.chestshop.util;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;

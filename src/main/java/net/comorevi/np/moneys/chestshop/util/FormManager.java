@@ -1,4 +1,4 @@
-package net.comorevi.moneyschestshop.util;
+package net.comorevi.np.moneys.chestshop.util;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
@@ -8,9 +8,9 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.TextFormat;
-import net.comorevi.moneyapi.util.TaxType;
-import net.comorevi.moneyschestshop.Main;
-import net.comorevi.moneyschestshop.MoneySChestShopAPI;
+import net.comorevi.np.moneys.chestshop.Main;
+import net.comorevi.np.moneys.chestshop.MoneySChestShopAPI;
+import net.comorevi.np.moneys.util.TaxType;
 import ru.nukkitx.forms.elements.CustomForm;
 
 public class FormManager {

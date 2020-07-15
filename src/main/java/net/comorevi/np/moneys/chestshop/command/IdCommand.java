@@ -1,10 +1,10 @@
-package net.comorevi.moneyschestshop.command;
+package net.comorevi.np.moneys.chestshop.command;
 
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
-import net.comorevi.moneyschestshop.Main;
-import net.comorevi.moneyschestshop.util.DataCenter;
+import net.comorevi.np.moneys.chestshop.Main;
+import net.comorevi.np.moneys.chestshop.util.DataCenter;
 
 public class IdCommand extends Command {
     public IdCommand(String name) {

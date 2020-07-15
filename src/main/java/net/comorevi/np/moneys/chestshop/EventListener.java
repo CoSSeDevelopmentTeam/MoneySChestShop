@@ -1,4 +1,4 @@
-package net.comorevi.moneyschestshop;
+package net.comorevi.np.moneys.chestshop;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
@@ -14,10 +14,10 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import net.comorevi.cphone.presenter.SharingData;
-import net.comorevi.moneyapi.MoneySAPI;
-import net.comorevi.moneyapi.util.TaxType;
-import net.comorevi.moneyschestshop.util.DataCenter;
-import net.comorevi.moneyschestshop.util.FormManager;
+import net.comorevi.np.moneys.chestshop.util.DataCenter;
+import net.comorevi.np.moneys.chestshop.util.FormManager;
+import net.comorevi.np.moneys.MoneySAPI;
+import net.comorevi.np.moneys.util.TaxType;
 
 import java.util.LinkedHashMap;
 

@@ -1,9 +1,9 @@
-package net.comorevi.moneyschestshop;
+package net.comorevi.np.moneys.chestshop;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.level.Location;
-import net.comorevi.moneyschestshop.util.SQLite3DataProvider;
+import net.comorevi.np.moneys.chestshop.util.SQLite3DataProvider;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;

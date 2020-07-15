@@ -59,12 +59,12 @@
  *
  **/
 
-package net.comorevi.moneyschestshop;
+package net.comorevi.np.moneys.chestshop;
 
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.TextFormat;
-import net.comorevi.moneyschestshop.command.ChestShopCommand;
-import net.comorevi.moneyschestshop.command.IdCommand;
+import net.comorevi.np.moneys.chestshop.command.ChestShopCommand;
+import net.comorevi.np.moneys.chestshop.command.IdCommand;
 
 public class Main extends PluginBase {
     public static final String MESSAGE_PREFIX = TextFormat.GRAY+"ChestShop>> "+TextFormat.RESET;
