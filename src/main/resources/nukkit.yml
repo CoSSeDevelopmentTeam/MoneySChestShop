@@ -1,5 +1,5 @@
 name: MoneySChestShop
-main: net.comorevi.np.moneys.chestchop.Main
+main: net.comorevi.np.moneys.chestshop.Main
 version: 1.6.0
 load: POSTWORLD
 author: popkechupki
